@@ -1,0 +1,21 @@
+DL Exp 01:
+
+Code:
+
+import pandas as pd
+
+df = pd.read_csv("/content/yahoo_stock.csv")
+print(df)
+
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+df.shape
+
+X_train.shape
+
+X_test.shape
+
+y_train.shape
+
+y_test.shape
