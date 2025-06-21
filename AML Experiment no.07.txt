@@ -1,0 +1,108 @@
+#Code:
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.metrics import accuracy_score
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+clf = AdaBoostClassifier(n_estimators=50, learning_rate=1, random_state=42)
+cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+
+print("Cross-validation scores:", cv_scores)
+print("Mean cross-validation score:", cv_scores.mean())
+
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+print("Test set accuracy:", accuracy)
+
+# Evaluate the performance of AdaBoost with different numbers of trees:
+import numpy as np
+import matplotlib.pyplot as plt
+
+n_estimators_values = [10, 50, 100, 500, 1000, 5000]
+cv_scores_mean = []
+
+for n_estimators in n_estimators_values:
+    clf = AdaBoostClassifier(n_estimators=n_estimators, learning_rate=1, random_state=42)
+    cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+    cv_scores_mean.append(cv_scores.mean())
+
+plt.plot(n_estimators_values, cv_scores_mean, marker='o')
+plt.xlabel('Number of Trees')
+plt.ylabel('Mean Cross-Validation Score')
+plt.title('AdaBoost Performance with Different Numbers of Trees')
+plt.show()
+
+# Evaluate the performance of AdaBoost with different learning rates
+learning_rates = np.linspace(0.1, 2, 20)
+cv_scores_mean = []
+
+for learning_rate in learning_rates:
+    clf = AdaBoostClassifier(n_estimators=50, learning_rate=learning_rate, random_state=42)
+    cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+    cv_scores_mean.append(cv_scores.mean())
+
+plt.plot(learning_rates, cv_scores_mean, marker='o')
+plt.xlabel('Learning Rate')
+plt.ylabel('Mean Cross-Validation Score')
+plt.title('AdaBoost Performance with Different Learning Rates')
+plt.show()
+
+#Theory:
+Boosting is an ensemble learning method that combines multiple weak learners to form a strong predictive model. It improves accuracy by focusing more on the data points that are harder to classify correctly.
+
+Learners are trained iteratively, each one correcting the errors of the previous.
+
+Misclassified instances receive more emphasis during training.
+
+Final predictions are made by combining outputs from all learners, often using weighted voting.
+
+Popular boosting algorithms:
+
+AdaBoost
+
+Gradient Boosting
+
+XGBoost
+
+a. Cross Validation
+Cross-validation is a model evaluation technique used to assess how well a machine learning model performs on unseen data. It works by:
+
+Splitting the dataset into folds (subsets),
+
+Training the model on some folds, and testing it on the remaining one,
+
+Repeating the process for each fold,
+
+Averaging the results to estimate overall performance.
+
+🔍 Helps in:
+
+Reducing overfitting/underfitting,
+
+Selecting the best hyperparameters,
+
+Improving model generalization.
+
+b. AdaBoost (Adaptive Boosting)
+AdaBoost is an ensemble method that combines multiple weak classifiers to form a strong classifier. It:
+
+Trains weak learners in sequence,
+
+Increases the weight of misclassified instances so future classifiers focus on them,
+
+Combines all learners using weighted majority voting.
+
+🟢 Key Strengths:
+
+Focuses on hard-to-classify examples,
+
+Widely used and effective in classification tasks,
+
+Assigns higher weight to more accurate classifiers.

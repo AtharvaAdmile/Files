@@ -1,0 +1,99 @@
+#Code:
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+dataset=pd.read_csv('/content/GroceryStoreDataSet.csv', names=["products"])
+dataset
+
+dataset.shape
+
+transactions=[]
+for i in range(0, 20):
+  transactions.append([str(dataset.values[i,j]) for j in range(0,1)])
+
+dataset=list(dataset["products"].apply(lambda x:x.split(',')))
+dataset
+
+from apyori import apriori
+rules=apriori(transactions=dataset, min_support=0.003, min_confidence=0.003)
+rules
+
+results=list(rules)
+results
+
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# Load the dataset (replace with your actual data loading)
+dataset = pd.read_csv('GroceryStoreDataSet.csv', names=["products"])
+
+# Convert to the correct format for mlxtend, only if necessary
+if isinstance(dataset, pd.DataFrame):
+    transactions = dataset['products'].str.split(',').tolist()
+elif isinstance(dataset, list) and all(isinstance(item, str) for item in dataset):
+    transactions = [s.split(',') for s in dataset]
+else:
+    # Assuming dataset is already a list of lists
+    transactions = dataset
+
+te = TransactionEncoder()
+te_ary = te.fit(transactions).transform(transactions)
+df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
+
+# Apply Apriori and generate rules
+frequent_itemsets = apriori(df_encoded, min_support=0.2, use_colnames=True)
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1.0)
+
+# Print the rules
+for index, rule in rules.iterrows():
+    print(f"Rule: {', '.join(list(rule['antecedents']))} -> {', '.join(list(rule['consequents']))}")
+    print(f"Support: {rule['support']:.2f}")
+    print(f"Confidence: {rule['confidence']:.2f}")
+    print(f"Lift: {rule['lift']:.2f}")
+    print("=============================")
+
+#Theory:
+
+Apriori is an unsupervised learning algorithm used to discover interesting relationships (rules) among items in large datasets.
+It is mainly used for:
+
+Market Basket Analysis
+
+Product recommendation systems
+
+Cross-selling strategies
+
+How Apriori Works (Step-by-Step)
+Let’s say we have a transaction dataset (like what people buy together at a store):
+
+Step 1: Set thresholds
+Support: Minimum frequency for an itemset to be considered frequent.
+
+Confidence: Strength of the rule (how often items Y appear with X).
+
+Lift (optional): Measures how much more likely Y is given X compared to chance.
+
+Step 2: Find Frequent Itemsets
+Start with individual items (1-itemsets).
+
+Remove items that don’t meet the minimum support.
+
+Combine surviving itemsets to form 2-itemsets, 3-itemsets, etc.
+
+Prune itemsets that don't meet the support threshold at each step.
+
+Repeat until no more itemsets can be formed.
+
+Step 3: Generate Association Rules
+From the frequent itemsets, generate rules of the form:
+
+A⇒B
+Calculate:
+
+Confidence = Support(A ∪ B) / Support(A)
+
+Lift = Confidence / Support(B)
+
+Keep rules that meet the confidence and lift thresholds.

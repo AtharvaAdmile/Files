@@ -1,0 +1,65 @@
+#Code:
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+dataset= pd.read_csv('/content/Mall_Customers.csv')
+dataset
+
+x=dataset.iloc[:,[3,4]].values
+import scipy.cluster.hierarchy as sch
+dendrogram=sch.dendrogram(sch.linkage(x,method='ward'))
+mtp.title('Dendrogram')
+mtp.xlabel('Customers')
+mtp.ylabel('Euclidean distances')
+mtp.show()
+
+from sklearn.cluster import AgglomerativeClustering
+hc = AgglomerativeClustering(n_clusters=5, linkage='ward')
+y_pred = hc.fit_predict(x)
+
+# Plotting
+import matplotlib.pyplot as plt
+plt.scatter(x[y_pred == 0, 0], x[y_pred == 0, 1], s=100, c='blue', label='Cluster 1')
+plt.scatter(x[y_pred == 1, 0], x[y_pred == 1, 1], s=100, c='green', label='Cluster 2')
+plt.scatter(x[y_pred == 2, 0], x[y_pred == 2, 1], s=100, c='red', label='Cluster 3')
+plt.scatter(x[y_pred == 3, 0], x[y_pred == 3, 1], s=100, c='cyan', label='Cluster 4')
+plt.scatter(x[y_pred == 4, 0], x[y_pred == 4, 1], s=100, c='magenta', label='Cluster 5')
+plt.legend()
+plt.show()
+
+#Theory:
+Hierarchical Clustering?
+
+Hierarchical Clustering is a clustering algorithm that builds a hierarchy (tree) of clusters.
+It doesn’t require you to pre-define the number of clusters like K-Means.
+It produces a dendrogram (a tree-like diagram) to visualize how data points are merged or split at each step.
+
+Two Types of Hierarchical Clustering:
+1. Agglomerative (Bottom-Up) — Most common
+Start with each data point as its own cluster.
+Merge the two closest clusters at each step.
+Continue until all points are merged into one big cluster.
+
+ How Agglomerative Clustering Works (Step-by-Step):
+1.Start with N clusters (1 per data point).
+
+2.Compute distance (similarity) between all pairs of clusters.
+
+3.Merge the two closest clusters based on a linkage criterion.
+
+4. Update the distance matrix.
+
+5. Repeat steps 2–4 until:
+
+Only 1 cluster is left
+
+Or a predefined number of clusters is reached
+
+2. Divisive (Top-Down)
+Start with all data points in one cluster.
+Recursively split clusters into smaller ones.
+Continue until each point is its own cluster.
+
+

@@ -1,0 +1,82 @@
+#Code:
+
+import pandas as pd
+
+data = pd.read_csv('Day1.csv')
+print(data)
+
+pip install mlxtend
+
+from mlxtend.frequent_patterns import fpgrowth
+from mlxtend.frequent_patterns import association_rules
+
+encoded_data =pd.get_dummies(data)
+print("Encoded data =\n", encoded_data)
+
+frequent_itemsets=fpgrowth(encoded_data,min_support=0.1,use_colnames=True)
+print("Frequent itemsets =\n",frequent_itemsets)
+
+rules =association_rules(frequent_itemsets,metric="lift",min_threshold=1)
+print('\n Frequent Itemsets=\n',rules.sort_values('lift',ascending=False).head(10))
+
+#Theory:
+MBA:
+Market Basket Analysis (MBA) is a data mining technique used to discover purchase patterns in transaction data — specifically, which products are frequently bought together.
+It analyzes a customer’s shopping cart (or "basket") to identify relationships between items.
+The goal is to uncover association rules, like:
+
+“Customers who buy bread and butter are likely to buy milk.
+
+FP Growth:
+FP-Growth (Frequent Pattern Growth) is an efficient and scalable method for frequent itemset mining, used as an alternative to the Apriori algorithm in market basket analysis.
+
+It’s faster and more memory-efficient than Apriori because it avoids generating candidate itemsets explicitly.
+
+How FP-Growth Works (Step-by-Step)
+Step 1: Count item frequencies
+Scan the dataset once to count the frequency (support) of each item.
+
+Discard items not meeting minimum support.
+
+Sort the remaining items by frequency (descending).
+
+Step 2: Build FP-Tree (Frequent Pattern Tree)
+Each transaction is inserted into the tree following the order of sorted frequent items.
+
+Common prefixes are shared in branches, reducing redundancy.
+
+Each node contains:
+
+Item name
+
+Count (number of transactions with that path)
+
+Links to same items (for quick access)
+
+Step 3: Mine Frequent Itemsets
+Start from the lowest frequent items (in reverse order).
+
+Construct conditional FP-trees for each item:
+
+These trees are built from paths in the main FP-tree that end with that item.
+
+Recursively mine patterns from these conditional trees.
+
+Types of MBA:
+1. Descriptive Market Basket Analysis
+📌 Purpose:
+To identify patterns in historical transaction data.
+
+Finds frequent itemsets and association rules without predicting future behavior.
+
+🔍 Example:
+"Customers who bought bread also bought butter 60% of the time."
+
+2. Predictive Market Basket Analysis
+📌 Purpose:
+To predict customer behavior based on previous transactions or current activity.
+
+Often used in recommendation systems.
+
+🔍 Example:
+"If a customer added milk and cornflakes to the cart, suggest banana."

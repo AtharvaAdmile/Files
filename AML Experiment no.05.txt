@@ -1,0 +1,108 @@
+#Code:
+import numpy as np
+
+state_to_index = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
+index_to_state = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E'}
+
+reward_matrix = np.array([
+    [0, 1, 0, 0, 0],
+    [1, 0, 1, 0, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 1, 0, 1],
+    [0, 0, 0, 1, 0]
+])
+
+print("Reward Matrix:")
+print(reward_matrix)
+
+gamma = 0.95  # Discount factor
+alpha = 0.1   # Learning rate
+
+print("Discount Factor (Gamma):", gamma)
+
+state_size = len(state_to_index)
+action_size = state_size
+Q_matrix = np.zeros([state_size, action_size])
+
+def q_learning_update(s, a, reward, s2, Q_matrix):
+    Q_matrix[s, a] = (1 - alpha) * Q_matrix[s, a] + alpha * (reward + gamma * np.max(Q_matrix[s2, :]))
+    s = s2
+    return s, Q_matrix
+
+def get_action(state, Q_matrix, epsilon=0.1):
+    if np.random.random() < epsilon:
+        return np.random.choice(action_size)
+    return np.argmax(Q_matrix[state, :])
+
+def find_optimal_route(initial_state, goal_state, Q_matrix, episodes=1000):
+    for _ in range(episodes):
+        state = initial_state
+        while state != goal_state:
+            action = get_action(state, Q_matrix)
+            next_state = action
+            reward = reward_matrix[state, action]
+            state, Q_matrix = q_learning_update(state, action, reward, next_state, Q_matrix)
+    return Q_matrix
+
+initial_state = state_to_index['A']
+goal_state = state_to_index['E']
+Q_matrix = find_optimal_route(initial_state, goal_state, Q_matrix)
+
+print("Q-matrix:")
+print(Q_matrix)
+
+optimal_actions = [np.argmax(Q_matrix[state, :]) for state in range(state_size)]
+optimal_actions = [index_to_state[action] for action in optimal_actions]
+print("Optimal Actions for each state:", optimal_actions)
+
+for state in state_to_index:
+    for action in state_to_index:
+        state_idx = state_to_index[state]
+        action_idx = state_to_index[action]
+        immediate_reward = reward_matrix[state_idx, action_idx]
+        print(f"Immediate Reward for moving from state {state} to state {action}: {immediate_reward}")
+
+action_sequence = ['A', 'B', 'C', 'D', 'E']
+discounted_reward = 0
+current_gamma = 1
+
+for i in range(len(action_sequence) - 1):
+    state = state_to_index[action_sequence[i]]
+    next_state = state_to_index[action_sequence[i+1]]
+    reward = reward_matrix[state, next_state]
+    discounted_reward += current_gamma * reward
+    current_gamma *= gamma
+
+print("Discounted Reward for the action sequence:", discounted_reward)
+
+#Theory:
+Reinforcement Learning (RL) is a type of machine learning where an agent learns to make decisions by interacting with an environment in order to maximize cumulative reward.
+
+The agent learns from trial and error, receiving feedback in the form of rewards or penalties based on its actions.
+
+1. Reward
+📌 What It Is:
+A reward is a numeric signal that the agent receives from the environment after taking an action in a given state.
+
+It tells the agent how good or bad its action was.
+
+Rewards guide the agent to learn what behavior is desirable
+2. Discounted Reward
+📌 What It Is:
+The discounted reward gives less weight to future rewards than immediate ones.
+It helps the agent balance short-term and long-term gains.
+ 3. Optimal Policy
+📌 What It Is:
+An optimal policy is a strategy that tells the agent what action to take in each state to maximize total expected rewards over time.
+
+Denoted as: 𝜋
+It yields the highest possible discounted return from any state
+
+🧠 In Other Words:
+"Given any situation, follow this strategy to do the best you possibly can."
+
+Reinforcement Learning elements are as follows:
+1.Policy
+2.Reward function
+3.Value function
+4.Model of the environment 

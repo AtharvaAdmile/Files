@@ -1,0 +1,80 @@
+Code:
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.arima.model import ARIMA
+
+df = pd.read_csv('AirPassengers.csv')
+
+# Step 2: Convert 'Month' column to datetime and set as index
+df['Month'] = pd.to_datetime(df['Month'])
+df.set_index('Month', inplace=True)
+
+df.columns = ['Passengers']
+
+# Step 3: Plot the time series
+df['Passengers'].plot(title='Monthly Airline Passengers', figsize=(10, 5))
+plt.ylabel('Passengers')
+plt.show()
+
+# Step 4: Decompose the time series
+decomposition = seasonal_decompose(df['Passengers'], model='multiplicative', period=12)
+decomposition.plot()
+plt.show()
+
+# Step 5: Fit an ARIMA model (order can be tuned)
+model = ARIMA(df['Passengers'], order=(2, 1, 2))  # ARIMA(p,d,q)
+model_fit = model.fit()
+print(model_fit.summary())
+
+# Step 6: Forecast for the next 12 months
+forecast = model_fit.forecast(steps=12)
+plt.figure(figsize=(10, 5))
+plt.plot(df['Passengers'], label='Historical')
+plt.plot(forecast.index, forecast, label='Forecast', color='red')
+plt.title('12-Month Forecast')
+plt.legend()
+plt.show()
+
+#Theory:
+Time Series Analysis (TSA) is a statistical method used to analyze data collected over time. It identifies patterns and trends to make future predictions and is commonly applied in finance, economics, weather forecasting, and stock market analysis.
+(a)
+a. Checking Stationarity:
+Stationarity means the statistical properties (like mean and variance) of a time series remain constant over time. It's crucial for many models. Visual inspection and statistical tests like the ADF (Augmented Dickey-Fuller) test help check for stationarity.
+
+b. Converting Non-Stationary to Stationary:
+Non-stationary data can be transformed using:
+
+Differencing (removing trends/seasonality),
+
+Logarithmic transformation (for exponential growth),
+
+Seasonal differencing (to remove repeated seasonal effects).
+
+c. Dickey-Fuller Test:
+A statistical test used to check for stationarity. It tests the null hypothesis that a time series is non-stationary. If the test statistic is less than the critical value, the null is rejected — indicating the series is stationary.
+
+d. ACF and PACF Plots:
+
+ACF (Autocorrelation Function): Shows correlation between current and lagged values.
+
+PACF (Partial Autocorrelation Function): Shows correlation while removing effects of intermediate lags.
+These plots help decide the order of AR (AutoRegressive) and MA (Moving Average) models.
+
+f. TSA Forecasting:
+Time Series Forecasting involves predicting future values using past data. Common techniques include:
+
+ARIMA
+
+Exponential smoothing models
+
+State space models
+
+The method used depends on the data and forecasting needs. The process includes:
+
+Fitting a model to historical data,
+
+Validating the model's performance, and
+
+Generating future predictions.
+
