@@ -1,0 +1,114 @@
+
+
+Practical no.4
+
+AIM :- Apply classification and regression on the dataset using deep neural network 
+
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import precision_score, recall_score, f1_score, mean_squared_error
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+# Load dataset
+df = pd.read_csv("Heart_disease_statlog.csv")
+
+# Features and targets
+X = df.drop(columns=['target', 'thalach'])
+y_classi = df['target']
+y_regree = df['thalach']
+
+# Split dataset
+X_train, X_test, y_train_cls, y_test_cls = train_test_split(X, y_classification, test_size=0.3, random_state=42)
+_, _, y_train_reg, y_test_reg = train_test_split(X, y_regression, test_size=0.3, random_state=42)
+
+# Scale features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Classification model
+classification_model = models.Sequential([
+    layers.Input(shape=(X_train_scaled.shape[1],)),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(1, activation='sigmoid')
+])
+classification_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Train classification model
+classification_model.fit(X_train_scaled, y_train_cls, epochs=10, batch_size=16, validation_split=0.1)
+
+# Predictions and classification metrics
+y_pred_prob = classification_model.predict(X_test_scaled).flatten()
+y_pred_cls = (y_pred_prob > 0.5).astype(int)
+
+precision = precision_score(y_test_cls, y_pred_cls)
+recall = recall_score(y_test_cls, y_pred_cls)
+f1 = f1_score(y_test_cls, y_pred_cls)
+_, accuracy = classification_model.evaluate(X_test_scaled, y_test_cls)
+
+print(f"\nClassification Metrics:")
+print(f"Accuracy:  {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall:    {recall:.4f}")
+print(f"F1 Score:  {f1:.4f}")
+
+# Regression model
+regression_model = models.Sequential([
+    layers.Input(shape=(X_train_scaled.shape[1],)),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(1)
+])
+regression_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+
+# Train regression model
+regression_model.fit(X_train_scaled, y_train_reg, epochs=10, batch_size=16, validation_split=0.1)
+
+# Predict and evaluate regression
+y_pred_reg = regression_model.predict(X_test_scaled).flatten()
+mse = mean_squared_error(y_test_reg, y_pred_reg)
+_, mae = regression_model.evaluate(X_test_scaled, y_test_reg)
+
+print(f"\nRegression Metrics:")
+print(f"MAE: {mae:.2f}")
+print(f"MSE: {mse:.2f}")
+
+
+_______________________________________________________________________________________________________________________________________________________________________________________
+
+
+-------------------------------------------------------------Theory-------------------------------------------------------------------------------------
+
+
+🎯 AIM
+To understand the working of Deep Neural Networks (DNN) and their use in regression and classification tasks.
+
+🔹 1. What is DNN?
+A Deep Neural Network (DNN) is a type of artificial neural network with multiple hidden layers between the input and output layers. 
+It is used to model complex patterns in data for tasks like prediction, classification, and more.
+
+🔹 2. How Does a DNN Work?
+DNNs work by passing input data through several layers of neurons. Each neuron applies weights, adds bias, and passes the result through an activation function. 
+The network learns by adjusting weights using a process called backpropagation during training.
+
+🔹 3. Regression in DNN
+In regression tasks, DNN predicts continuous values (like price, temperature, etc.). 
+The output layer usually has a linear activation, and the loss function used is Mean Squared Error (MSE) or MAE.
+
+🔹 4. Training a Model
+Training a DNN involves feeding data through the network, comparing output with actual values using a loss function, and updating weights using an optimizer like Adam or SGD.
+This process repeats for several epochs until the model learns.
+
+🔹 5. Classification in DNN
+For classification, DNN outputs class probabilities using softmax (for multi-class) or sigmoid (for binary). 
+The model is trained using classification losses like cross-entropy and evaluated using accuracy.
+
+🔚 6. Conclusion
+DNNs are powerful models for handling both regression and classification problems. 
+With proper training and design, they can learn complex data patterns and make accurate predictions.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,71 @@
+DL EXP 3
+
+AIM:-Feeding data to pretrained neural network and making predictions 
+
+# #  #  # # # # #  CODE # # # # # # # # # # # # # # # # #
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
+
+
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras.applications.vgg16 import preprocess_input, decode_predictions
+
+# Load the VGG16 model with ImageNet weights
+model = VGG16(weights='imagenet', include_top=True)
+
+# Load and preprocess an image
+img_path = '/content/download.jpg'
+img = image.load_img(img_path, target_size=(224, 224))
+img_array = image.img_to_array(img)
+img_array = np.expand_dims(img_array, axis=0)
+img_array = preprocess_input(img_array)
+
+# Predict the class
+predictions = model.predict(img_array)
+# Decode predictions to readable labels
+from tensorflow.keras.applications.vgg16 import decode_predictions
+decoded_predictions = decode_predictions(predictions, top=5)[0]
+for label, description, probability in decoded_predictions:
+    print(f"{description}: {probability:.4f}")
+
+_________________________________________________________________________________________________________________________________________________________________________
+
+
+
+ ---------------------------------------------------------------------------- Theory ----------------------------------------------------------------------------------------------
+
+
+🎯 AIM
+To understand the use of pre-trained models like VGG16, ResNet50, and MobileNet in deep learning applications.
+
+🔹 1. What is a Pre-trained Model?
+A pre-trained model is a deep learning model that has already been trained on a large dataset like ImageNet.
+Instead of training from scratch, we can reuse these models for new tasks (such as classification or feature extraction), which saves time and improves performance, especially when data is limited.
+
+🔹 2. VGG16
+VGG16 is a deep convolutional neural network with 16 layers developed by the Visual Geometry Group at Oxford.
+It uses small 3×3 filters and has a simple architecture. VGG16 is known for its uniform structure and good performance, but it is computationally heavy due to a large number of parameters.
+
+🔹 3. ResNet50
+ResNet50 is a 50-layer deep neural network that uses residual connections or skip connections.
+These help solve the vanishing gradient problem by allowing gradients to flow through the network easily.
+It is more efficient than VGG16 and performs better on deeper architectures.
+
+🔹 4. MobileNet
+MobileNet is a lightweight CNN designed for mobile and embedded devices.
+It uses depthwise separable convolutions to reduce computation and size.
+Although it is less accurate than VGG or ResNet, it is very fast and suitable for real-time and low-resource environments.
+
+🔚 5. Conclusion
+Pre-trained models provide powerful and efficient ways to apply deep learning. VGG16 offers simplicity, ResNet50 improves depth with residual learning, and MobileNet allows deployment on mobile devices.
+These models help in quick development and better accuracy, especially when large datasets are not available.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+

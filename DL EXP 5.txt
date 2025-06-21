@@ -1,0 +1,118 @@
+EX 5:
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from keras import models, layers
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+df = pd.read_csv("IMDB Dataset.csv")
+
+# Features and targets
+X = df['review']
+y_classification = df['sentiment'].map({'positive': 1, 'negative': 0})  # Convert to binary
+
+# Split dataset into training and testing
+X_train, X_test, y_train_cls, y_test_cls = train_test_split(X, y_classification, test_size=0.3, random_state=42)
+
+# Convert text to numeric with TF-IDF
+vectorizer = TfidfVectorizer(max_features=10000)
+X_train_vect = vectorizer.fit_transform(X_train).toarray()
+X_test_vect = vectorizer.transform(X_test).toarray()
+
+# ---------------- Train/Validation Split ----------------
+# Validation set from the training data
+x_val = X_train_vect[:10000]
+partial_x_train = X_train_vect[10000:]
+
+y_val = y_train_cls[:10000]
+partial_y_train = y_train_cls[10000:]
+
+# ---------------- Build the Model ----------------
+model = models.Sequential([
+    layers.Dense(16, activation='relu', input_shape=(X_train_vect.shape[1],)),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(1, activation='sigmoid')
+])
+
+# Compile the model
+model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+
+# ---------------- Train the Model ----------------
+history = model.fit(partial_x_train, partial_y_train, epochs=10, batch_size=512, validation_data=(x_val, y_val))
+
+# ---------------- Evaluate the Model ----------------
+results = model.evaluate(X_test_vect, y_test_cls)
+accuracy = results[1]
+print(f"\nTest Accuracy: {accuracy:.4f}")
+
+# ---------------- Predictions ----------------
+predictions = model.predict(X_test_vect)
+y_pred_cls = (predictions.flatten() > 0.5).astype(int)
+
+# ---------------- Classification Metrics ----------------
+precision = precision_score(y_test_cls, y_pred_cls)
+recall = recall_score(y_test_cls, y_pred_cls)
+f1 = f1_score(y_test_cls, y_pred_cls)
+
+print(f"\nClassification Metrics:")
+print(f"Accuracy:  {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall:    {recall:.4f}")
+print(f"F1 Score:  {f1:.4f}")
+
+///////////
+
+# Plot training & validation accuracy
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Epochs vs Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+///
+
+# Plot training & validation loss
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Epochs vs Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+////
+----------------------------------------
+
+### **Theoretical Summary of the Code (IMDB Sentiment Analysis)**
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+🎯 AIM
+To classify IMDB movie reviews as positive or negative using a neural network and TF-IDF for text representation.
+
+🔹 1. Binary Sentiment Classification
+This refers to classifying text into two categories: positive or negative sentiment. It is a common Natural Language Processing (NLP) task used in opinion mining and customer feedback analysis.
+
+🔹 2. TF-IDF (Term Frequency-Inverse Document Frequency)
+TF-IDF is a text vectorization technique that converts words into numerical features based on their importance. It reduces the impact of common words and emphasizes unique, informative terms in each document.
+
+🔹 3. Neural Network Model
+A basic feedforward neural network is used with one or more Dense layers. The input layer receives TF-IDF vectors, hidden layers apply activations (like ReLU), and the output layer uses sigmoid activation to predict binary sentiment.
+
+🔹 4. Loss Function and Optimizer
+The model uses binary crossentropy as the loss function, suitable for binary classification. An optimizer like Adam is used for adjusting weights during training.
+
+🔹 5. Model Training and Evaluation
+The dataset is split into training and testing sets. The model is trained over several epochs and evaluated using accuracy and loss on the test data to check how well it generalizes.
+
+🔚 Conclusion
+This experiment shows how combining TF-IDF vectorization with a neural network enables effective sentiment classification on textual data. It highlights the integration of NLP and deep learning techniques for real-world classification tasks.🚀
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------

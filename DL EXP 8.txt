@@ -1,0 +1,156 @@
+EX 8:
+
+!pip install pytorch-tabnet
+
+////
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from pytorch_tabnet.tab_model import TabNetClassifier
+import torch
+import matplotlib.pyplot as plt
+
+# Load the dataset
+df = pd.read_csv("heart (1).csv")
+
+# Check for missing values
+if df.isnull().sum().any():
+    print("Warning: Missing values detected. Filling with median for numeric columns.")
+    df.fillna(df.median(numeric_only=True), inplace=True)
+
+# Separate features and target
+if "target" not in df.columns:
+    print("Error: 'target' column not found in the dataset.")
+    exit()
+
+X = df.drop("target", axis=1)
+y = df["target"]
+
+# Ensure target is binary (0/1)
+unique_labels = np.unique(y)
+if len(unique_labels) != 2:
+    print(f"Error: Target variable should be binary, but found values: {unique_labels}")
+    exit()
+
+# Normalize numeric features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train-test split
+X_train, X_val, y_train, y_val = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Convert to NumPy arrays (ensure float32 for TabNet compatibility)
+X_train = np.array(X_train, dtype=np.float32)
+X_val = np.array(X_val, dtype=np.float32)
+y_train = np.array(y_train, dtype=np.int64)
+y_val = np.array(y_val, dtype=np.int64)
+
+# Initialize TabNetClassifier
+clf = TabNetClassifier(
+    optimizer_fn=torch.optim.Adam,
+    optimizer_params=dict(lr=2e-2),
+    scheduler_params={"step_size": 5, "gamma": 0.9},
+    scheduler_fn=torch.optim.lr_scheduler.StepLR,
+    mask_type="entmax",  # "sparsemax" also works
+    device_name="cuda" if torch.cuda.is_available() else "cpu"  # Use GPU if available
+)
+
+# Train with early stopping
+clf.fit(
+    X_train=X_train,
+    y_train=y_train,
+    eval_set=[(X_train, y_train), (X_val, y_val)],
+    eval_name=["train","val"],
+    eval_metric=["accuracy", "logloss"],
+    max_epochs=20,
+    patience=10,
+    batch_size=32,
+    virtual_batch_size=16,
+    num_workers=0,
+    drop_last=False
+)
+
+# Evaluate
+y_pred = clf.predict(X_val)
+
+# Calculate evaluation metrics
+accuracy = accuracy_score(y_val, y_pred)
+precision = precision_score(y_val, y_pred, average='binary')
+recall = recall_score(y_val, y_pred, average='binary')
+f1 = f1_score(y_val, y_pred, average='binary')
+
+# Print results
+print("\nEvaluation Results:")
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print(f"Precision: {precision * 100:.2f}%")
+print(f"Recall: {recall * 100:.2f}%")
+print(f"F1 Score: {f1 * 100:.2f}%")
+
+
+//////
+
+
+# Plot 1: Training and Validation Accuracy
+plt.figure(figsize=(12, 5))
+plt.subplot(1, 2, 1)
+plt.plot(clf.history["train_accuracy"], label="Train Accuracy")
+plt.plot(clf.history["val_accuracy"], label="Validation Accuracy")
+plt.title("Model Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+/////
+
+
+# Plot 2: Training and Validation Loss
+plt.figure(figsize=(12, 5))
+plt.subplot(1, 2, 1)
+plt.plot(clf.history["loss"], label="Train Loss")
+plt.plot(clf.history["val_logloss"], label="Validation Loss")
+plt.title("Model Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+/////
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+THEORY 
+
+### **Theory Behind the Code (Short & Easy to Remember)**  
+
+
+🎯 AIM
+To classify the presence of heart disease using a pre-trained TabNet model with transfer learning.
+
+🔹 1. What is TabNet?
+TabNet is a deep learning architecture specifically designed for tabular data (like CSV files). It uses sequential attention to select important features at each decision step, making it highly interpretable and efficient.
+
+🔹 2. Why Transfer Learning with TabNet?
+Transfer learning allows us to reuse a pre-trained TabNet model, which has already learned useful patterns from large datasets. By fine-tuning it on our heart disease dataset, we save time and improve accuracy even with limited data.
+
+🔹 3. Dataset Overview
+The heart disease dataset typically includes medical features like age, cholesterol, blood pressure, etc., with a binary target:
+1 = heart disease present, 0 = not present.
+
+🔹 4. Model Training
+The pre-trained TabNet model is fine-tuned on the heart disease data. The input features are normalized, and the model is trained using a loss function like binary crossentropy and an optimizer like Adam.
+
+🔹 5. Evaluation
+Model performance is evaluated using metrics like accuracy, AUC (Area Under Curve), and confusion matrix. TabNet also allows us to see feature importance, helping explain the prediction.
+
+🔚 Conclusion
+TabNet with transfer learning provides an efficient and interpretable solution for tabular classification tasks. Using it on the heart disease dataset helps accurately detect the risk of heart disease while highlighting important medical features.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------

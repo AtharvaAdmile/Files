@@ -1,0 +1,103 @@
+
+Exp:-2
+
+AIM:-Creating Function to compute various losses
+
+
+# # # # # # # # #  CODE  # # # # # # # # # # # # # # # 
+
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.model_selection import train_test_split
+
+# Load Data
+df = pd.read_csv("/content/HealthData.csv")
+
+# Handle missing values
+df.fillna(df.mean(), inplace=True)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+# Split Data
+X = df.iloc[:, :-1]
+y = df.iloc[:, -1]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+
+# Model Definition
+model = Sequential([
+    Dense(2, activation='relu', input_shape=(X_train.shape[1],)),  # Layer 1: 2 neurons, ReLU
+    Dense(8, activation='relu'),  # Layer 2: 8 neurons, ReLU
+    Dense(1, activation='sigmoid')  # Output Layer: 1 neuron, Sigmoid
+])
+
+# Compile Model with Binary Crossentropy and Multiple Metrics
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy', 'mae', 'mse'])
+
+
+model.summary()
+
+
+# Train the Model
+history = model.fit(X_train, y_train, epochs=20, validation_data=(X_test, y_test))
+
+
+# Evaluate the model
+loss, accuracy, mae, mse = model.evaluate(X_test, y_test, verbose=0)
+print(f"\nFinal Evaluation on Test Data:")
+print(f"Binary Cross-Entropy Loss: {loss:.4f}")
+print(f"Accuracy: {accuracy:.4f}")
+print(f"Mean Absolute Error (MAE): {mae:.4f}")
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+
+
+import matplotlib.pyplot as plt
+
+# Plot training & validation accuracy
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+####################################           Theory            ############
+
+To create a function that computes various losses using a neural network on health data.
+
+🔹 1. What is Sequential Model?
+A Sequential model in Keras is a simple stack of layers where the output of one layer is the input to the next. 
+It’s ideal for building models with a linear structure, like feedforward neural networks.
+
+🔹 2. What is Dense Layer?
+A Dense layer is a fully connected layer where each neuron gets input from all neurons of the previous layer.
+ It helps in learning complex patterns by applying weights and activation functions.
+
+🔹 3. Neuron in Neural Network
+A neuron is a unit that processes inputs, applies weights and bias, and passes the result through an activation function. 
+Multiple neurons work together to learn and make predictions.
+
+🔹 4. Activation Function and Its Types
+Activation functions add non-linearity to the model. Common types are ReLU (used in hidden layers) and Sigmoid (used in output for binary classification).
+ They help the network learn complex data patterns.
+
+🔹 5. Loss Function
+A loss function measures how wrong the model's prediction is. We use binary crossentropy for classification.
+ MAE and MSE are also used to check prediction errors numerically.
+
+🔹 6. Epochs
+An epoch is one complete pass through the training data. Training for multiple epochs helps the model learn better. 
+Here, we trained the model for 20 epochs.
+
+🔚 7. Conclusion
+We built and trained a simple neural network, evaluated it using multiple loss metrics, and visualized its accuracy.
+ This helped understand model training, evaluation, and performance analysis.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

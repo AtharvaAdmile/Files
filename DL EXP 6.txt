@@ -1,0 +1,117 @@
+EX 6:
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import reuters
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.callbacks import EarlyStopping
+
+# Load the Reuters dataset
+(num_words, max_words) = (10000, 10000)
+(x_train, y_train), (x_test, y_test) = reuters.load_data(num_words=num_words)
+
+# Initialize and fit the tokenizer
+tokenizer = Tokenizer(num_words=max_words)
+tokenizer.fit_on_sequences(x_train)  # <-- This line is required for TF-IDF
+
+# Now convert sequences to TF-IDF matrix
+x_train = tokenizer.sequences_to_matrix(x_train, mode='tfidf')
+x_test = tokenizer.sequences_to_matrix(x_test, mode='tfidf')
+
+# One-hot encode the labels
+num_classes = np.max(y_train) + 1
+y_train = to_categorical(y_train, num_classes)
+y_test = to_categorical(y_test, num_classes)
+
+# Build the DNN model
+model = Sequential()
+model.add(Dense(256, activation='relu', input_shape=(max_words,)))
+model.add(Dropout(0.4))
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.4))
+model.add(Dense(num_classes, activation='softmax'))
+
+# Compile the model
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+# Early stopping
+early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+# Train the model
+history = model.fit(x_train, y_train,
+                    batch_size=128,
+                    epochs=20,
+                    validation_split=0.2,
+                    callbacks=[early_stop],
+                    verbose=1)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+print(f'\nTest Accuracy: {test_acc:.4f}')
+
+/////
+
+#Plot accuracy
+plt.figure(figsize=(12, 5))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Accuracy Over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+////
+
+# Plot Loss
+plt.figure(figsize=(12, 5))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Training loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss Over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+////
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### **Theory Behind the Code (Short & Easy to Remember)**  
+🎯 AIM
+To classify news articles from the Reuters dataset into multiple categories using a Deep Neural Network (DNN).
+
+🔹 1. Reuters Dataset
+The Reuters dataset is a built-in text dataset in Keras, containing 11,000+ newswire articles labeled over 46 topics. It is commonly used for multi-class text classification tasks in NLP.
+
+🔹 2. Text Preprocessing
+Articles are tokenized and converted to sequences of integers (word indices). These are then transformed into one-hot encoded or vectorized input suitable for feeding into the neural network.
+
+🔹 3. Deep Neural Network (DNN)
+A feedforward neural network is used with:
+
+An input layer accepting the processed text vector,
+
+One or more Dense hidden layers with ReLU activation,
+
+An output layer with softmax activation to produce probabilities for each class (since it’s a multi-class task).
+
+🔹 4. Loss Function & Optimizer
+The model uses categorical crossentropy (for one-hot labels) or sparse categorical crossentropy (for integer labels).
+
+Adam optimizer is used to train the model efficiently.
+
+🔹 5. Model Training and Evaluation
+The model is trained for several epochs on the training data. It is then evaluated using accuracy on the test data to assess performance across all classes.
+
+🔚 Conclusion
+This experiment demonstrates how DNNs can be used for multi-class text classification. By using the Reuters dataset, we learn to prepare text data, build and train a neural model, and evaluate it using appropriate metrics for real-world NLP tasks.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

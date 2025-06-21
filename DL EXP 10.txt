@@ -1,0 +1,183 @@
+EX 10:
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torchvision
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+
+////
+
+
+# 1. Hyperparameters
+image_size = 28*28
+latent_dim = 100
+batch_size = 128
+lr = 0.0002
+epochs = 20
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+////
+
+
+# 2. Data Preparation
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize([0.5], [0.5])  # Normalize to [-1, 1]
+])
+
+train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+
+/////
+
+# 3. Generator
+class Generator(nn.Module):
+    def __init__(self, latent_dim, img_shape):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Linear(latent_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Linear(256, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, img_shape),
+            nn.Tanh()  # Output in range [-1, 1]
+        )
+
+    def forward(self, z):
+        return self.model(z)
+
+
+////
+
+
+# 4. Discriminator
+class Discriminator(nn.Module):
+    def __init__(self, img_shape):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Linear(img_shape, 512),
+            nn.LeakyReLU(0.2),
+            nn.Linear(512, 256),
+            nn.LeakyReLU(0.2),
+            nn.Linear(256, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, img):
+        return self.model(img)
+
+/////
+
+
+# 5. Initialize Models
+G = Generator(latent_dim, image_size).to(device)
+D = Discriminator(image_size).to(device)
+
+////
+
+# 6. Loss and Optimizers
+criterion = nn.BCELoss()
+optimizer_G = optim.Adam(G.parameters(), lr=lr)
+optimizer_D = optim.Adam(D.parameters(), lr=lr)
+
+///
+
+# 7. Training Loop
+for epoch in range(epochs):
+    for i, (imgs, _) in enumerate(train_loader):
+        real_imgs = imgs.view(imgs.size(0), -1).to(device)
+        real_labels = torch.ones(imgs.size(0), 1).to(device)
+        fake_labels = torch.zeros(imgs.size(0), 1).to(device)
+
+        # === Train Discriminator ===
+        z = torch.randn(imgs.size(0), latent_dim).to(device)
+        fake_imgs = G(z)
+        real_loss = criterion(D(real_imgs), real_labels)
+        fake_loss = criterion(D(fake_imgs.detach()), fake_labels)
+        d_loss = real_loss + fake_loss
+
+        optimizer_D.zero_grad()
+        d_loss.backward()
+        optimizer_D.step()
+
+        # === Train Generator ===
+        z = torch.randn(imgs.size(0), latent_dim).to(device)
+        fake_imgs = G(z)
+        g_loss = criterion(D(fake_imgs), real_labels)
+
+        optimizer_G.zero_grad()
+        g_loss.backward()
+        optimizer_G.step()
+
+    print(f"Epoch [{epoch+1}/{epochs}] | D Loss: {d_loss.item():.4f} | G Loss: {g_loss.item():.4f}")
+
+    # Show sample every 10 epochs
+    if (epoch + 1) % 10 == 0:
+        with torch.no_grad():
+            z = torch.randn(25, latent_dim).to(device)
+            samples = G(z).view(-1, 1, 28, 28)
+            samples = samples * 0.5 + 0.5                            # Rescale to [0, 1]
+            grid = torchvision.utils.make_grid(samples, nrow=5)
+            plt.figure(figsize=(5, 5))
+            plt.imshow(grid.permute(1, 2, 0).cpu())
+            plt.axis('off')
+            plt.title(f'Generated Samples @ Epoch {epoch+1}')
+            plt.show()
+
+
+////
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+THEORY :-
+
+
+AIM:- To implement a Generative Adversarial Network (GAN) to generate handwritten digit images similar to the MNIST dataset.
+
+🔹 1. What is GAN?
+A GAN (Generative Adversarial Network) consists of two neural networks:
+
+Generator: Creates fake images.
+
+Discriminator: Tries to distinguish between real and fake images.
+Both networks compete with each other, improving over time.
+
+🔹 2. Why MNIST Dataset?
+The MNIST dataset contains 28x28 grayscale images of handwritten digits (0–9). It is widely used for testing image generation models because it’s simple and well-structured.
+
+🔹 3. How GAN Works?
+The Generator takes random noise as input and tries to generate realistic images.
+
+The Discriminator takes both real MNIST images and fake ones from the Generator and tries to classify them correctly.
+
+During training, both models are optimized in an adversarial manner:
+
+The Generator learns to fool the Discriminator.
+
+The Discriminator learns to spot fake images.
+
+🔹 4. Model Training
+The GAN is trained for several epochs, alternating between:
+
+Training the Discriminator to distinguish real and fake.
+
+Training the Generator to improve image quality based on feedback from the Discriminator.
+
+🔹 5. Output and Evaluation
+Over time, the Generator starts producing images that closely resemble real digits. The success is typically measured visually by inspecting generated images at different epochs.
+
+🔚 Conclusion
+GANs are powerful models for generating new data. This experiment shows how a GAN can learn the structure of handwritten digits from MNIST and generate realistic synthetic images, demonstrating the concept of adversarial learning.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

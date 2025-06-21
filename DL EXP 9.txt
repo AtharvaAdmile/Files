@@ -1,0 +1,132 @@
+EX 9:
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+# 1. Load Dataset
+df = pd.read_csv('temperature.csv')
+print(df.head())
+
+# 2. Parse and clean data
+df['DATE'] = pd.to_datetime(df['DATE'])
+df.sort_values('DATE', inplace=True)
+df.dropna(subset=['AvgTemp'], inplace=True)
+
+# Use only 'AvgTemp' for this example
+temps = df['AvgTemp'].values
+
+# Normalize temperatures for better training (optional)
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+temps_scaled = scaler.fit_transform(temps.reshape(-1, 1)).flatten()
+
+# 3. Prepare sequences
+def create_sequences(data, seq_length=20):
+    X, y = [], []
+    for i in range(len(data) - seq_length):
+        X.append(data[i:i+seq_length])
+        y.append(data[i+seq_length])
+    return np.array(X), np.array(y)
+
+seq_length = 20
+X, y = create_sequences(temps_scaled, seq_length)
+X = X.reshape((X.shape[0], X.shape[1], 1))
+
+# 4. Split into train and test
+split = int(len(X) * 0.8)
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
+
+# 5. Build RNN model
+model = Sequential([
+    SimpleRNN(50, activation='tanh', input_shape=(seq_length, 1)),
+    Dense(1)
+])
+
+model.compile(optimizer='adam', loss='mse')
+model.summary()
+
+# 6. Train the model
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.1)
+
+# 7. Predict and inverse scale
+predicted = model.predict(X_test)
+predicted = scaler.inverse_transform(predicted)
+y_test_actual = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+
+# 8. Evaluate the model
+y_true = y_test_actual.flatten()
+y_pred = predicted.flatten()
+
+mse = mean_squared_error(y_true, y_pred)
+rmse = np.sqrt(mse)
+mae = mean_absolute_error(y_true, y_pred)
+r2 = r2_score(y_true, y_pred)
+
+print("\nModel Evaluation Metrics:")
+print(f"Mean Squared Error (MSE): {mse:.3f}")
+print(f"Root Mean Squared Error (RMSE): {rmse:.3f}")
+print(f"Mean Absolute Error (MAE): {mae:.3f}")
+print(f"R² Score: {r2:.3f}")
+
+////
+
+# 8. Plot results
+plt.figure(figsize=(10, 6))
+plt.plot(y_test_actual, label='Actual AvgTemp')
+plt.plot(predicted, label='Predicted AvgTemp')
+plt.legend()
+plt.title('Average Temperature Forecasting using RNN')
+plt.xlabel('Time')
+plt.ylabel('Temperature (°C)')
+plt.show()
+
+/////
+
+
+------------------------------------------------------------------------------
+
+
+
+
+Theory: Recurrent Neural Network (RNN) for Time Series Forecasting
+
+
+
+Aim:-temperature forecasting using rnn 
+
+
+
+To forecast average temperatures using a Simple Recurrent Neural Network (RNN) trained on a time series dataset.
+
+🔹 1. What is a Time Series?
+A time series is a sequence of data points collected over time intervals. In this case, the dataset (temperature.csv) contains temperature values recorded over time.
+
+🔹 2. Why Use RNN for Time Series?
+RNNs are designed to handle sequential data by using loops in their architecture. They maintain a memory of past inputs, making them ideal for modeling temporal patterns in time series forecasting.
+
+🔹 3. Simple RNN Architecture
+A Simple RNN consists of:
+
+An input layer to accept time steps,
+
+One or more RNN layers that process sequences,
+
+A Dense output layer to predict the next temperature value.
+It uses tanh or ReLU activation and is trained to minimize the Mean Squared Error (MSE) loss.
+
+🔹 4. Data Preparation
+The temperature data is first normalized and reshaped into sequences (e.g., past 10 days → next day). This allows the RNN to learn how past temperature values influence future ones.
+
+🔹 5. Model Training & Evaluation
+The RNN model is trained over multiple epochs. It is evaluated using MSE or MAE on test data to check how well it predicts future temperatures.
+
+🔚 Conclusion
+A Simple RNN can effectively learn patterns in time series data like temperature. This experiment demonstrates how RNNs can be used for real-world forecasting tasks involving sequential data.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

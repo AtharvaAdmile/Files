@@ -1,0 +1,140 @@
+DL 7:
+
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+
+# Load and preprocess the MNIST dataset
+(X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+# Normalize pixel values to be between 0 and 1
+X_train = X_train.astype('float32') / 255.0
+X_test = X_test.astype('float32') / 255.0
+
+# Reshape data to include channel dimension (for CNN)
+X_train = X_train.reshape((X_train.shape[0], 28, 28, 1))
+X_test = X_test.reshape((X_test.shape[0], 28, 28, 1))
+
+# Convert labels to categorical (one-hot encoding)
+y_train = tf.keras.utils.to_categorical(y_train, 10)
+y_test = tf.keras.utils.to_categorical(y_test, 10)
+
+# Build the CNN model
+model = models.Sequential([
+    layers.Input(shape=(28, 28, 1)),
+    layers.Conv2D(32, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+
+# Compile the model
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Display model summary
+model.summary()
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=10, batch_size=64,
+                    validation_data=(X_test, y_test))
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(X_test, y_test)
+print(f'\nTest accuracy: {test_acc:.4f}')
+
+# Get predicted probabilities and convert them to class labels
+y_pred_probs = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred_probs, axis=1)
+y_true_classes = np.argmax(y_test, axis=1)
+
+# Calculate evaluation metrics
+accuracy = accuracy_score(y_true_classes, y_pred_classes)
+precision = precision_score(y_true_classes, y_pred_classes, average='weighted')
+recall = recall_score(y_true_classes, y_pred_classes, average='weighted')
+f1 = f1_score(y_true_classes, y_pred_classes, average='weighted')
+
+# Print individual scores
+print(f"Accuracy: {accuracy:.4f}")
+print(f"Precision: {precision:.4f}")
+print(f"Recall: {recall:.4f}")
+print(f"F1 Score: {f1:.4f}")
+
+
+////
+
+# Plot training & validation accuracy
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+
+///
+
+# Plot training & validation loss
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.show()
+
+///
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+THEORY 
+
+### **Theory Behind the Code (Short & Easy to Remember)**  
+
+🎯 AIM
+To classify handwritten digits (0–9) from the MNIST dataset using a Convolutional Neural Network (CNN).
+
+🔹 1. MNIST Dataset
+The MNIST dataset contains 70,000 grayscale images of handwritten digits (28×28 pixels) divided into 10 classes (digits 0 to 9). It is a standard benchmark for image classification.
+
+🔹 2. Why CNN for Image Classification?
+CNNs are ideal for image data as they can automatically learn spatial hierarchies (edges, shapes, objects) using convolutional layers. They reduce the number of parameters and are more efficient than fully connected networks for images.
+
+🔹 3. CNN Architecture
+The CNN model typically consists of:
+
+Convolutional layers to extract features using filters,
+
+ReLU activation to introduce non-linearity,
+
+MaxPooling layers to downsample feature maps,
+
+Flatten layer to convert 2D data to 1D,
+
+Dense layers for final classification,
+
+Softmax output layer for multi-class probability prediction.
+
+🔹 4. Loss Function and Optimizer
+The model uses categorical crossentropy (if labels are one-hot encoded) or sparse categorical crossentropy (if labels are integers).
+Adam optimizer is commonly used for faster convergence.
+
+🔹 5. Model Training and Evaluation
+The model is trained for several epochs with training data and evaluated using accuracy on the test set.
+Graphs for accuracy and loss over epochs help visualize learning performance.
+
+🔚 Conclusion
+Using CNN on the MNIST dataset provides high accuracy in recognizing handwritten digits. This experiment shows how CNNs effectively process image data using filters and pooling, and are well-suited for computer vision tasks.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
